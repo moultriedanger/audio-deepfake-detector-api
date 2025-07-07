@@ -1,2 +1,6 @@
 .venv/
 /app/uploads
+__pycache__/
+*.pyc
+*.pth
+*.pt

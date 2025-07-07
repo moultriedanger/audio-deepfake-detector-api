@@ -1,10 +1,10 @@
-# app.py
-
 from flask import Flask, request, jsonify
 from model.inference import run_inference
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 UPLOAD_FOLDER = "uploads"
 MODEL_PATH = "model/librifake_pretrained_lambda0.5_epoch_25.pth"
