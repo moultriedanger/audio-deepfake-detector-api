@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from model.inference import run_inference
 import os
 from flask_cors import CORS
+from dotenv import load_dotenv
+import boto3
+from model_loader import download_model_if_missing
 
 app = Flask(__name__)
 CORS(app)
@@ -10,6 +13,10 @@ UPLOAD_FOLDER = "uploads"
 MODEL_PATH = "model/librifake_pretrained_lambda0.5_epoch_25.pth"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+download_model_if_missing('deepfake-detector-model-storage', 
+                          'librifake_pretrained_lambda0.5_epoch_25.pth', 
+                          "model/librifake_pretrained_lambda0.5_epoch_25.pth")
 
 @app.route("/")
 def test_home():
