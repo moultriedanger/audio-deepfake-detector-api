@@ -2,9 +2,12 @@ import torch
 import numpy as np
 import yaml
 from torch.nn import functional as F
-from model.model import RawNet
+from .model import RawNet
 from torch import Tensor
 import librosa
+import os
+
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'model_config_RawNet.yaml')
 
 def pad(x, max_len=96000):
     x_len = x.shape[0]
@@ -36,7 +39,7 @@ def load_sample(sample_path, max_len = 96000):
 
     return y_list
 
-def run_inference(input_path, model_path, config_path='model/model_config_RawNet.yaml'):
+def run_inference(input_path, model_path, config_path=CONFIG_PATH):
     with open(config_path, 'r') as f_yaml:
         config = yaml.safe_load(f_yaml)
 

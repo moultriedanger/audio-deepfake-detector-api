@@ -5,6 +5,8 @@ import boto3
 load_dotenv()
 
 def download_model_if_missing(bucket, key, local_path):
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    
     if not os.path.exists(local_path):
         print("Downloading model from S3...")
         s3 = boto3.client('s3')
