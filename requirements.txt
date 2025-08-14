@@ -1,22 +1,18 @@
-# --- Core web ---
 Flask==3.0.3
 flask-cors==4.0.1
 gunicorn==21.2.0
 python-dotenv==1.0.1
 
-
 transformers==4.45.0
+tokenizers==0.20.3        
 huggingface-hub==0.24.6
 safetensors==0.4.4
-tokenizers==0.19.1
 torch==2.3.1
-
 
 librosa==0.10.2.post1
 audioread==3.0.1
 soundfile==0.12.1
 soxr==0.3.7
-
 
 numpy==1.26.4
 scipy==1.11.4
