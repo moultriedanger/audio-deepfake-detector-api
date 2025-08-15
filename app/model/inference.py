@@ -1,38 +1,64 @@
-# app/model/inference.py
 import os
-from typing import Dict, Any, List
-from transformers import pipeline
-
-# Build absolute path from env (falls back to repo-root/model/deepfake_model)
-DEFAULT_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "model", "deepfake_model")
+import torch
+import librosa
+from transformers import (
+    AutoModelForAudioClassification,
+    AutoProcessor,
+    AutoFeatureExtractor,
 )
-MODEL_DIR = os.path.abspath(os.getenv("MODEL_DIR", DEFAULT_DIR))
 
-_classifier = None  # lazy singleton
+HF_MODEL_ID = os.getenv("HF_MODEL_ID", "mo-thecreator/Deepfake-audio-detection")
+MODEL_DIR = os.getenv("MODEL_DIR", "/tmp/deepfake_model")
+os.environ.setdefault("HF_HOME", "/tmp/hf_cache") 
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
-def _get_classifier():
-    global _classifier
-    if _classifier is None:
-        # Sanity check so we fail clearly if the folder is missing/empty
-        if not os.path.isdir(MODEL_DIR) or not os.listdir(MODEL_DIR):
-            raise RuntimeError(
-                f"MODEL_DIR '{MODEL_DIR}' missing or empty. "
-                "Ensure S3 download ran and/or MODEL_DIR points to the correct local folder."
-            )
-        _classifier = pipeline(
-            task="audio-classification",
-            model=MODEL_DIR,
-            device=-1,
-            top_k=None
-        )
-    return _classifier
+TARGET_SR = 16000
 
-def run_inference(file_path: str) -> Dict[str, Any]:
-    clf = _get_classifier()
-    outputs: List[dict] = clf(file_path)
-    scores = {o["label"].lower(): float(o["score"]) for o in outputs}
-    fake_score = scores.get("fake", 0.0)
-    real_score = scores.get("real", 0.0)
-    label = "fake" if fake_score >= real_score else "real"
-    return {"label": label, "scores": {"fake": fake_score, "real": real_score}}
+_processor = None  
+_model = None
+
+def _load_from(path_or_id: str):
+    """
+    Load processor/extractor + model from a local dir (if present)
+    or from the HF Hub model id. Works with either Processor or FeatureExtractor.
+    """
+    # Try AutoProcessor first; fall back to AutoFeatureExtractor if needed
+    try:
+        proc = AutoProcessor.from_pretrained(path_or_id)
+    except Exception:
+        proc = AutoFeatureExtractor.from_pretrained(path_or_id)
+
+    model = AutoModelForAudioClassification.from_pretrained(path_or_id)
+    return proc, model
+
+def _ensure_loaded():
+    global _processor, _model
+    if _processor is not None and _model is not None:
+        return
+    # Prefer local dir if it has files; otherwise use HF Hub
+    if os.path.isdir(MODEL_DIR) and os.listdir(MODEL_DIR):
+        _processor, _model = _load_from(MODEL_DIR)
+    else:
+        _processor, _model = _load_from(HF_MODEL_ID)
+
+def run_inference(file_path: str):
+    _ensure_loaded()
+
+    # librosa (+audioread + ffmpeg) supports wav/mp3/m4a/flac/ogg
+    audio, _ = librosa.load(file_path, sr=TARGET_SR, mono=True)
+
+    # Works for both Processor and FeatureExtractor
+    inputs = _processor(audio, sampling_rate=TARGET_SR, return_tensors="pt")
+
+    with torch.no_grad():
+        logits = _model(**inputs).logits
+    probs = torch.softmax(logits, dim=-1).squeeze()
+    pred_id = int(probs.argmax().item())
+
+    id2label = getattr(_model.config, "id2label", {}) or {}
+    label = id2label.get(pred_id, str(pred_id))
+
+    return {
+        "prediction": label,
+        "scores": {id2label.get(i, str(i)): float(p) for i, p in enumerate(probs.tolist())},
+    }
