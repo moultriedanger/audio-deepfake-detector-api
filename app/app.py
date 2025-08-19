@@ -8,7 +8,16 @@ load_dotenv()
 
 def create_app(testing: bool = True):
     app = Flask(__name__)
-    CORS(app, supports_credentials=True)
+    
+    ALLOWED_ORIGINS = ["https://audio-deepfake-detector.vercel.app"]
+    
+    CORS(
+        app,
+        resources={r"/*": {"origins": ALLOWED_ORIGINS}},
+        supports_credentials=True,
+        methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"]
+    )
 
     USE_S3 = os.getenv("USE_S3_DOWNLOAD", "false").lower() == "true"
 
