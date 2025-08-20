@@ -47,3 +47,22 @@
   </a>
 </p>
 
+## 🚀 Usage
+
+### POST `/predict`
+Run deepfake detection on an uploaded audio file.
+
+- **Method:** `POST`
+- **Content-Type:** `multipart/form-data`
+- **Body:**
+  - `file`: audio file to analyze (e.g., `.wav`, `.mp3`). WAV recommended.
+- **Response (200):**
+  ```json
+  {
+    "prediction": "fake",
+    "scores": {
+      "fake": 0.9983661770820618,
+      "real": 0.0016337810084223747
+    }
+  }
+
