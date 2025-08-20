@@ -19,8 +19,6 @@
 
 ---
 
-![Front End Screenshot](images/record_result.png)
-
 ## 📌 Technologies Used
 
 <p align="center">
@@ -46,6 +44,13 @@
     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/heroku/heroku-original.svg" height="40" alt="Heroku" title="Heroku" />
   </a>
 </p>
+
+## 🙏 Model Credit
+
+This app uses **[mo-thecreator/Deepfake-audio-detection](https://huggingface.co/mo-thecreator/Deepfake-audio-detection)**, a fine-tuned **wav2vec2** audio classification model
+- **Base model:** `facebook/wav2vec2-base` (via `mo-thecreator/wav2vec2-base-finetuned`)
+- **Contributors:** `mo-thecreator`, `Abdalla312`
+
 
 ## 🚀 Usage
 
